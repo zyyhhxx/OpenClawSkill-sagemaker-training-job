@@ -154,8 +154,30 @@ def resolve_image_uri(framework, version, py_version, region, instance_type):
     )
 
 
+# Patterns to exclude from source packaging
+SOURCE_EXCLUDE_PATTERNS = {
+    "__pycache__", ".pyc", ".pyo", ".git", ".gitignore",
+    ".env", ".venv", "venv", "node_modules", ".DS_Store",
+    ".ipynb_checkpoints", "__MACOSX", ".eggs", "*.egg-info",
+}
+
+
+def _should_exclude(path_str):
+    """Check if a file path matches any exclusion pattern."""
+    parts = Path(path_str).parts
+    for part in parts:
+        for pattern in SOURCE_EXCLUDE_PATTERNS:
+            if pattern in part:
+                return True
+    return False
+
+
 def package_source(script_path, source_dir, requirements_path):
-    """Package training source code into a tar.gz for S3 upload."""
+    """Package training source code into a tar.gz for S3 upload.
+
+    Only includes Python files, requirements.txt, and common data formats.
+    Excludes .git, .env, venv, __pycache__, and other non-essential files.
+    """
     script_path = Path(script_path).resolve()
     if source_dir:
         source_dir = Path(source_dir).resolve()
@@ -163,15 +185,28 @@ def package_source(script_path, source_dir, requirements_path):
         source_dir = script_path.parent
 
     tmp = tempfile.NamedTemporaryFile(suffix=".tar.gz", delete=False)
+    included = []
+    excluded = []
     with tarfile.open(tmp.name, "w:gz") as tar:
         for f in source_dir.rglob("*"):
-            if f.is_file() and "__pycache__" not in str(f) and ".pyc" not in str(f):
-                arcname = f.relative_to(source_dir)
-                tar.add(f, arcname=arcname)
+            if not f.is_file():
+                continue
+            rel = f.relative_to(source_dir)
+            if _should_exclude(str(rel)):
+                excluded.append(str(rel))
+                continue
+            tar.add(f, arcname=rel)
+            included.append(str(rel))
         if requirements_path:
             req = Path(requirements_path).resolve()
             if req.exists():
                 tar.add(req, arcname="requirements.txt")
+                included.append("requirements.txt")
+
+    if excluded:
+        print(f"  Source package: {len(included)} files included, {len(excluded)} excluded")
+    else:
+        print(f"  Source package: {len(included)} files")
 
     return tmp.name, script_path.name
 

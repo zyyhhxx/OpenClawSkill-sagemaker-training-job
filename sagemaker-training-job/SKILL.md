@@ -1,7 +1,7 @@
 ---
 name: sagemaker-training-job
 description: Submit ML training jobs to AWS SageMaker — package code, upload to S3, launch on GPU/CPU instances, poll status, download artifacts. Use when training machine learning models that need more compute than the local machine (GPU training, large datasets, parallel experiments). Supports PyTorch, TensorFlow, scikit-learn, XGBoost/LightGBM. Handles spot instances for cost savings. Triggers on "train on SageMaker", "GPU training", "submit training job", "cloud training", "SageMaker", "remote training".
-metadata: {"openclaw": {"requires": {"bins": ["python3"]}}}
+metadata: {"openclaw": {"requires": {"bins": ["python3"]}, "primaryEnv": "AWS_DEFAULT_REGION"}}
 ---
 
 # SageMaker Training
@@ -12,11 +12,21 @@ TensorFlow, scikit-learn, and XGBoost with managed spot training for cost saving
 ## Prerequisites
 
 - `boto3` Python package installed (`pip install boto3`). `sagemaker` recommended.
-- AWS credentials available (EC2 instance profile or access keys)
+- **AWS credentials** available — EC2 instance profile (recommended), or `aws configure` / env vars (`AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`)
 - S3 bucket for training artifacts
 - Two IAM roles configured — see `references/setup.md` for exact policies:
   - **Role A (Caller):** SageMaker job management + S3 access + ECR image pull
   - **Role B (Execution):** S3 data access + CloudWatch logs + ECR images
+
+## Security Notes
+
+- **AWS credentials** are never logged, embedded in scripts, or uploaded to S3.
+  boto3 resolves credentials from the standard chain (instance profile → env → config file).
+- **Source packaging** excludes `.git`, `.env`, `venv`, `__pycache__`, and other
+  non-essential files. Use `--source-dir` to explicitly scope what gets packaged.
+  Always review `--dry-run` output before submitting to production.
+- **IAM scope:** Both caller and execution role policies should be scoped to your
+  specific S3 bucket and SageMaker execution role ARN. See `references/setup.md`.
 
 ## Quick Start
 
