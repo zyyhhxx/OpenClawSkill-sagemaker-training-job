@@ -1,7 +1,7 @@
 ---
 name: sagemaker-training-job
 description: Submit ML training jobs to AWS SageMaker — package code, upload to S3, launch on GPU/CPU instances, poll status, download artifacts. Use when training machine learning models that need more compute than the local machine (GPU training, large datasets, parallel experiments). Supports PyTorch, TensorFlow, scikit-learn, XGBoost/LightGBM. Handles spot instances for cost savings. Triggers on "train on SageMaker", "GPU training", "submit training job", "cloud training", "SageMaker", "remote training".
-metadata: {"openclaw": {"requires": {"bins": ["python3"]}, "primaryEnv": "AWS_DEFAULT_REGION"}}
+metadata: {"openclaw": {"requires": {"bins": ["python3"]}, "primaryEnv": "AWS_DEFAULT_REGION", "homepage": "https://github.com/zyyhhxx/OpenClawSkill-sagemaker-training-job"}}
 ---
 
 # SageMaker Training
